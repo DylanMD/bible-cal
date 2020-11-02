@@ -1,18 +1,16 @@
 package main
 
 import (
+	"database/sql"
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/gofrs/uuid"
-
-	"database/sql"
-	"encoding/json"
-	"log"
-
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -98,7 +96,10 @@ func main() {
 	})
 
 	http.HandleFunc("/zip", func(w http.ResponseWriter, r *http.Request) {
+
 		reqCity, ok := r.URL.Query()["city"]
+
+		// variables
 		var cities []city
 
 		// open up database
@@ -110,7 +111,8 @@ func main() {
 
 		searchCity := strings.Trim(reqCity[0], "\"")
 
-		rows, err := db.Query("select primaryCity, state, county, timezone, latitude, longitude, irsEstimatedPopulation2015 from zip_code_sample where primaryCity like  '%' || ? || '%'  and type = 'STANDARD'", searchCity)
+		rows, err := db.Query("select zip, primaryCity, state, county, timezone, latitude, longitude, irsEstimatedPopulation2015 from zip_code_database where primaryCity like  '%' || ? || '%'  and type = 'STANDARD'", searchCity)
+
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -131,6 +133,7 @@ func main() {
 		}
 
 		if ok && len(cities) > 0 {
+
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(cities)
 		} else {
